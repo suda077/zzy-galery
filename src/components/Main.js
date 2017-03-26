@@ -20,6 +20,35 @@ var getRangeRandom = (low, high) => Math.floor(Math.random() * (high - low) + lo
 var getDegRandom = () => Math.ceil(Math.random() * 60 - 30);
 
 
+// 控制组件
+class ControllerUnit extends React.Component{
+  constructor(props){
+    super(props);
+    this.handleClick = this.handleClick.bind(this);
+  }
+  handleClick(e){
+    if(this.props.arrange.isCenter){
+      this.props.inverse();
+    }
+    else{
+      this.props.center();
+    }
+
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  render(){
+    //是否添加class
+    let isCenterClassName = this.props.arrange.isCenter? ' is-center' : '';
+    let isInverseClassName = this.props.arrange.isInverse ? ' is-inverse' : '';
+
+    return (
+      <span className={'controller-unit'+isCenterClassName+isInverseClassName} onClick={this.handleClick}></span>
+    );
+  }
+}
+
+
 // 定义每个图片标签
 class ImgFigure extends React.Component{
   constructor(props){
@@ -50,7 +79,7 @@ class ImgFigure extends React.Component{
 
     // 指定图片角度
     if(this.props.arrange.rotate){
-      ['Moz','Ms','Webkit',''].forEach((item) => {
+      ['Moz','ms','Webkit',''].forEach((item) => {
         styleObj[item + 'Transform'] = 'rotate(' + this.props.arrange.rotate + 'deg)';
       });
     }
@@ -61,7 +90,7 @@ class ImgFigure extends React.Component{
     }
 
     //按isInverse判断是否添加class
-    let isInverseClassName = this.props.arrange.isInverse ? ' is-inverse ' : '';
+    let isInverseClassName = this.props.arrange.isInverse ? ' is-inverse' : '';
     
     return (
       <figure className={'img-figure' + isInverseClassName} style={styleObj} onClick={this.handleClick} >
@@ -221,6 +250,7 @@ class AppComponent extends React.Component {
         halfImgW = Math.ceil(imgW / 2),
         halfImgH = Math.ceil(imgH / 2);
 
+
     // 中心图片位置范围
     this.Constant.centerPos = {
       left: halfStageW - halfImgW,
@@ -243,6 +273,16 @@ class AppComponent extends React.Component {
 
     this.Constant.vPosRange.x[0] = halfStageW - imgW;
     this.Constant.vPosRange.x[1] = halfStageW;
+
+
+    //定位controllerNav
+    var controllerNavDOM = ReactDOM.findDOMNode(this.refs.controllerNav),
+        navW = controllerNavDOM.scrollWidth,
+        halfnavW = navW / 2,
+        bodyW = document.body.scrollWidth,
+        halfBodyW = bodyW / 2;
+    controllerNavDOM.style['left'] = (halfBodyW - halfnavW) + 'px';
+
 
     // 初始化第1张图片居中
     this.rearrange(0);
@@ -271,13 +311,19 @@ class AppComponent extends React.Component {
         }
       }
 
-      imgFigures.push(<ImgFigure data={item} ref={'imgFigure'+index} arrange={this.state.imgsArrangeArr[index]}  inverse={this.inverse(index)} center={this.center(index)} />);
+      // 把ImgFigure添加进数组
+      imgFigures.push(<ImgFigure key={index} data={item} ref={'imgFigure'+index} arrange={this.state.imgsArrangeArr[index]}  inverse={this.inverse(index)} center={this.center(index)} />);
+
+      // 把ControllerUnit添加进数组
+      controllerUnits.push(<ControllerUnit key={index} ref={'controllerUnit'+index} arrange={this.state.imgsArrangeArr[index]} inverse={this.inverse(index)} center={this.center(index)} />);
+
     });
+
 
     return (
       <section className="stage" ref='stage'>
         <div className="img-sec">{imgFigures}</div>
-    		<nav className="controller-nav">{controllerUnits}</nav>
+    		<nav className="controller-nav" ref='controllerNav'>{controllerUnits}</nav>
     	</section>
     );
   }
